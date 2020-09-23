@@ -10,7 +10,7 @@ plugins {
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '14'
+sourceCompatibility = '11'
 
 configurations {
     compileOnly {
@@ -51,7 +51,8 @@ sourceSets {
     main.java.srcDir querydslDir
 }
 configurations {
-    querydsl.extendsFrom compileClasspath }
+    querydsl.extendsFrom compileClasspath
+}
 compileQuerydsl {
     options.annotationProcessorPath = configurations.querydsl
 }

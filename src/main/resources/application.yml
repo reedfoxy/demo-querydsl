@@ -21,4 +21,4 @@ spring:
     properties:
       hibernate:
         format_sql: true # sql query pretty option
-#        use_sql_comments: true # JPQL 로그 주석으로 확인 할 수 있다.
+        use_sql_comments: true # JPQL 로그 주석으로 확인 할 수 있다.
