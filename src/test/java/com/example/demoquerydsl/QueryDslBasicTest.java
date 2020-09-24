@@ -572,6 +572,24 @@ public class QueryDslBasicTest {
     }
 
     /**
+     * QueryDSL 으로 DTO Select 사용하기
+     * 생성자 접근 방법 @AllArgConstructor 가 있어야 함
+     */
+    @Test
+    public void findDtoByConstructor() {
+
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class, member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println(memberDto);
+        }
+    }
+
+
+    /**
      * 필드명이 다른 경우 + 서브쿼리
      * username > .as("name") 으로 사용
      */
@@ -597,22 +615,7 @@ public class QueryDslBasicTest {
         }
     }
 
-    /**
-     * QueryDSL 으로 DTO Select 사용하기
-     * 생성자 접근 방법 @AllArgConstructor 가 있어야 함
-     */
-    @Test
-    public void findDtoByConstructor() {
 
-        List<MemberDto> result = queryFactory
-                .select(Projections.constructor(MemberDto.class, member.username, member.age))
-                .from(member)
-                .fetch();
-
-        for (MemberDto memberDto : result) {
-            System.out.println(memberDto);
-        }
-    }
 
     /**
      * QueryProjection 사용
@@ -683,7 +686,7 @@ public class QueryDslBasicTest {
     private List<Member> searchMember2(String usernameParam, Integer ageParam) {
         return queryFactory
                 .selectFrom(member)
-                .where(allEq(usernameParam, ageParam))
+                .where(usernameEq(usernameParam), ageEq(ageParam))
                 .fetch();
     }
 
@@ -705,5 +708,76 @@ public class QueryDslBasicTest {
     private BooleanExpression allEq(String usernameCond, Integer ageCond) {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
+
+    /**
+     * 28살 미만읜 모든 회원의 유저네임의 이름을 전부 비회원으로 변경
+     * 벌크연산 이우헤는 flush 와 clear 을 사용하는게 좋다.
+     */
+    @Test
+    public void bulkUpdate() {
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+    /**
+     * 모든 회원의 나이를 +1 해라
+     */
+    @Test
+    public void bulkAdd() {
+        queryFactory
+                .update(member)
+                .set(member.age , member.age.add(1))
+                .execute();
+        em.flush();
+        em.clear();
+    }
+
+    /**
+     * 18살이 넘는 회원을 모두 삭제해라
+     */
+    @Test
+    public void bulkDelete(){
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
+
+    @Test
+    public void sqlFunction(){
+        List<String> result = queryFactory
+                .select( Expressions.stringTemplate(
+                        "function('replace', {0}, {1}, {2})",
+                        member.username, "member", "M"))
+                .from(member)
+                .fetch();
+
+        for( String s : result ) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    @Test
+    public void sqlFunction2() {
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+//                .where(member.username.eq(
+//                        Expressions.stringTemplate("function('lower', {0})", member.username)))
+                .where(member.username.eq(member.username.lower()))
+                .fetch();
+
+        for ( String s : result ) {
+            System.out.println("s = " + s);
+        }
+    }
+
+
 
 }
